@@ -1,14 +1,14 @@
 import { MongoRepository } from 'typeorm'
 import { ObjectId } from 'mongodb'
 import { BaseMongo } from '../config/BaseMongo'
-import Variations from '../schemas/Variations'
+import Variation from '../schemas/Variation'
 
 export class VariationsRepository extends BaseMongo {
   private variationsRepository: Promise<MongoRepository<any>>
 
   constructor() {
     super()
-    this.variationsRepository = super.getMongoRepository(Variations)
+    this.variationsRepository = super.getMongoRepository(Variation)
   }
 
   public async getAll(term: string, page: number, pageSize: number) {
@@ -16,7 +16,7 @@ export class VariationsRepository extends BaseMongo {
 
     const skip = (page - 1) * pageSize
 
-    let all: Variations[] = []
+    let all: Variation[] = []
     let count: number = 0
 
     if (term) {
@@ -50,9 +50,9 @@ export class VariationsRepository extends BaseMongo {
     }
   }
 
-  public async insert(variation: Variations) {
+  public async insert(variation: Variation) {
     const repo = await this.variationsRepository
-    const variationToInsert: Variations = repo.create(variation)
+    const variationToInsert: Variation = repo.create(variation)
     const result = await repo.save(variationToInsert)
 
     return result

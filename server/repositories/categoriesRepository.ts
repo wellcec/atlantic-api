@@ -1,14 +1,14 @@
 import { MongoRepository } from 'typeorm'
 import { ObjectId } from 'mongodb'
 import { BaseMongo } from '../config/BaseMongo'
-import Categories from '../schemas/Categories'
+import Category from '../schemas/Category'
 
 export class CategoriesRepository extends BaseMongo {
   private categoriesRepository: Promise<MongoRepository<any>>
 
   constructor() {
     super()
-    this.categoriesRepository = super.getMongoRepository(Categories)
+    this.categoriesRepository = super.getMongoRepository(Category)
   }
 
   public async getAll(term: string, page: number, pageSize: number) {
@@ -16,7 +16,7 @@ export class CategoriesRepository extends BaseMongo {
 
     const skip = (page - 1) * pageSize
 
-    let all: Categories[] = []
+    let all: Category[] = []
     let count: number = 0
 
     if (term) {
@@ -25,7 +25,7 @@ export class CategoriesRepository extends BaseMongo {
         where: {
           $or: [
             { name: regex_like },
-            { 'subCategories.name': regex_like },
+            { 'subCategory.name': regex_like },
           ],
         },
       }
@@ -51,15 +51,15 @@ export class CategoriesRepository extends BaseMongo {
     }
   }
 
-  public async insert(category: Categories) {
+  public async insert(category: Category) {
     const repo = await this.categoriesRepository
-    const categoryToInsert: Categories = repo.create(category)
+    const categoryToInsert: Category = repo.create(category)
     const result = await repo.save(categoryToInsert)
 
     return result
   }
 
-  public async update(id: string, objToUpdate: Categories) {
+  public async update(id: string, objToUpdate: Category) {
     const repo = await this.categoriesRepository
     const result = await repo.update(id, objToUpdate)
 

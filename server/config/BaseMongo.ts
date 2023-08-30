@@ -1,8 +1,9 @@
 import logger from '../logger/logger'
 import MongoConnection from '../config/MongoConnection'
+import { EntityTarget, ObjectLiteral } from 'typeorm'
 
 export abstract class BaseMongo {
-  async getMongoRepository(entity: any) {
+  async getMongoRepository(entity: EntityTarget<ObjectLiteral>) {
     try {
       const db = await new MongoConnection().getDataSourceMongo()
 

@@ -1,6 +1,6 @@
 import { GetAllCategoriesResponse } from '../models/categories'
 import { CategoriesRepository } from '../repositories/categoriesRepository'
-import Categories from '../schemas/Categories'
+import Category from '../schemas/Category'
 
 export class CategoriesController {
   private categoriesRepository: CategoriesRepository
@@ -13,11 +13,11 @@ export class CategoriesController {
     return await this.categoriesRepository.getAll(term, page, pageSize)
   }
 
-  public async insertCategory(category: Categories) {
+  public async insertCategory(category: Category) {
     return await this.categoriesRepository.insert(category)
   }
 
-  public async updateCategory(id: string, category: Categories) {
+  public async updateCategory(id: string, category: Category) {
     return await this.categoriesRepository.update(id, category)
   }
 

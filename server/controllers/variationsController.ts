@@ -1,6 +1,6 @@
 import { GetAllVariationsResponse } from '../models/variations'
 import { VariationsRepository } from '../repositories/variationsRepository'
-import Variations from '../schemas/Variations'
+import Variation from '../schemas/Variation'
 
 export class VariationsController {
   private variationsRepository: VariationsRepository
@@ -13,7 +13,7 @@ export class VariationsController {
     return await this.variationsRepository.getAll(term, page, pageSize)
   }
 
-  public async insertVariation(variation: Variations) {
+  public async insertVariation(variation: Variation) {
     return await this.variationsRepository.insert(variation)
   }
 

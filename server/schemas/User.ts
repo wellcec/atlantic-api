@@ -1,19 +1,18 @@
 import { Entity, Column, ObjectIdColumn, ObjectId } from 'typeorm'
-import SubCategories from './SubCategories'
 
-@Entity('categories')
-class Categories {
+@Entity('users')
+class User {
   @ObjectIdColumn()
   id: ObjectId
 
   @Column({ default: "" })
   name: string
 
-  @Column({ default: [] })
-  subCategories: SubCategories[]
+  @Column({ default: "" })
+  document: string
 
   @Column()
   createdDate: Date
 }
 
-export default Categories
+export default User

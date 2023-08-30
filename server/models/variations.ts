@@ -1,4 +1,4 @@
-import Variations from '../schemas/Variations'
+import Variations from '../schemas/Variation'
 
 type GetAllVariationsResponse = {
   data: Variations[]

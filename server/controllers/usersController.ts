@@ -1,6 +1,6 @@
 import { GetAllUsersRespnse } from '../models/users'
 import { UsersRepository } from '../repositories/usersRepository'
-import User from '../schemas/Users'
+import User from '../schemas/User'
 
 export class UsersController {
   private usersRepository

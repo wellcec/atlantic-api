@@ -1,5 +1,5 @@
-import Categories from '../schemas/Categories'
-import SubCategories from '../schemas/SubCategories'
+import Categories from '../schemas/Category'
+import SubCategories from '../schemas/SubCategory'
 
 type GetAllCategoriesResponse = {
   data: Categories[]

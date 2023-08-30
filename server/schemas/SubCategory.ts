@@ -1,6 +1,6 @@
 import { Column, ObjectIdColumn, ObjectId } from 'typeorm'
 
-class SubCategories {
+class SubCategory {
   @ObjectIdColumn()
   id: ObjectId
 
@@ -11,4 +11,4 @@ class SubCategories {
   createdDate: Date
 }
 
-export default SubCategories
+export default SubCategory

@@ -1,4 +1,4 @@
-import User from '../schemas/Users'
+import User from '../schemas/User'
 
 type GetAllUsersRespnse = {
   data: User[]

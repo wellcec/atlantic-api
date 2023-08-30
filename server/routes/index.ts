@@ -3,6 +3,7 @@ import { validateAccessToken } from '../middleware/authentication'
 import usersRoute from './usersRoute'
 import categoriesRoute from './categoriesRoute'
 import variationsRoute from './variationsRoute'
+import productsRoute from './productsRoute'
 const router = Router()
 
 router.get('/api/healthcheck', async (req, res) => {
@@ -22,5 +23,6 @@ router.get('/api/healthcheck', async (req, res) => {
 router.use('/api/users', usersRoute)
 router.use('/api/categories', categoriesRoute)
 router.use('/api/variations', variationsRoute)
+router.use('/api/products', productsRoute)
 
 export { router }

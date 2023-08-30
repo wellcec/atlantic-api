@@ -1,15 +1,15 @@
 import { Column, ObjectIdColumn, ObjectId, Entity } from 'typeorm'
 
-@Entity('variations')
-class Variations {
+@Entity('images')
+class Image {
   @ObjectIdColumn()
   id: ObjectId
 
   @Column({ default: "" })
-  name: string
+  fileName: string
 
   @Column()
   createdDate: Date
 }
 
-export default Variations
+export default Image

@@ -1,9 +1,10 @@
 import { DataSource } from 'typeorm'
 import { env } from 'process'
-import Users from '../schemas/Users'
-import Categories from '../schemas/Categories'
+import Users from '../schemas/User'
+import Categories from '../schemas/Category'
 import logger from '../logger/logger'
-import Variations from '../schemas/Variations'
+import Variations from '../schemas/Variation'
+import Image from '../schemas/Image'
 
 export default class MongoConnection {
   private dataSource: DataSource
@@ -13,7 +14,7 @@ export default class MongoConnection {
       type: 'mongodb',
       host: env.MONGODB_URL,
       database: 'bookmagic',
-      entities: [Users, Categories, Variations],
+      entities: [Users, Categories, Variations, Image],
       useUnifiedTopology: true,
       synchronize: true,
       logging: false,

@@ -1,14 +1,14 @@
 import { MongoRepository } from 'typeorm'
 import { ObjectId } from 'mongodb'
 import { BaseMongo } from '../config/BaseMongo'
-import Users from '../schemas/Users'
+import User from '../schemas/User'
 
 export class UsersRepository extends BaseMongo {
   private usersRepository: Promise<MongoRepository<any>>
 
   constructor() {
     super()
-    this.usersRepository = super.getMongoRepository(Users)
+    this.usersRepository = super.getMongoRepository(User)
   }
 
   public async getAll(term: string, page: number, pageSize: number) {
@@ -16,7 +16,7 @@ export class UsersRepository extends BaseMongo {
 
     const skip = (page - 1) * pageSize
 
-    let all: Users[] = []
+    let all: User[] = []
     let count: number = 0
 
     if (term) {
@@ -50,15 +50,15 @@ export class UsersRepository extends BaseMongo {
     }
   }
 
-  public async insert(user: Users) {
+  public async insert(user: User) {
     const repo = await this.usersRepository
-    const userToInsert: Users = repo.create(user)
+    const userToInsert: User = repo.create(user)
     const result = await repo.save(userToInsert)
 
     return result
   }
 
-  public async update(id: string, objToUpdate: Users) {
+  public async update(id: string, objToUpdate: User) {
     const repo = await this.usersRepository
     const result = await repo.update(id, objToUpdate)
 
