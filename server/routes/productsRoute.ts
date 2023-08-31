@@ -1,4 +1,4 @@
-import { Router } from 'express'
+import { Router, Request, Response } from 'express'
 const fs = require("fs")
 const formidable = require('formidable')
 
@@ -10,11 +10,11 @@ import { ftpServerInfo } from '../config/FtpConnection'
 import { ProductsController } from '../controllers/productsController'
 import Image from '../schemas/Image'
 const { SomethingWrong, Success, Error } = codes
-const productsRoute = Router()
 
+const productsRoute = Router()
 const controller = new ProductsController()
 
-productsRoute.post('/upload', async (req: any, res) => {
+productsRoute.post('/upload', async (req: Request, res: Response) => {
   try {
     const form = new formidable.IncomingForm()
 
@@ -34,13 +34,18 @@ productsRoute.post('/upload', async (req: any, res) => {
           .then(() => ftp.cd('/images'))
           .then(() => ftp.uploadFrom(fs.createReadStream(file.filepath), file.originalFilename))
           .then(async () => {
-            const newImage = new Image()
-            newImage.fileName = file.originalFilename
-            newImage.createdDate = new Date()
+            fs.readFile(file.filepath, 'base64', async (_, data) => {
+              const base64Image = `data:image/png;base64,${data}`
 
-            await controller.insertImages(newImage)
+              const newImage = new Image()
+              newImage.fileName = file.originalFilename
+              newImage.base64 = base64Image
+              newImage.createdDate = new Date()
 
-            ftp.close()
+              await controller.insertImages(newImage)
+
+              ftp.close()
+            })
           })
       }
 
@@ -48,16 +53,9 @@ productsRoute.post('/upload', async (req: any, res) => {
     })
 
   } catch (error) {
-    logger.error(`productsRoute upload error ==> ${error}`)
+    logger.error(`productsRoute upload image error ==> ${error}`)
     return res.status(Error).send({ message: 'Ocorreu um erro ao processar as imagens.' })
   }
 })
-
-// Intermediate route for files
-// app.get('/image/:filename', (req, res) => {
-//   const ftpUrl = `ftp://user:password@your-ftp-server/${req.params.filename}`;
-
-//   request.get(ftpUrl).pipe(res);
-// });
 
 export default productsRoute

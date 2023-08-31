@@ -20,7 +20,7 @@ categoriesRoute.get('', async (req: Request, res: Response) => {
     return res.status(Success).send(categorys)
   } catch (error) {
     logger.error(`categoriesRoute get error ==> ${error}`)
-    return res.status(Error).send(error)
+    return res.status(Error).send({ message: `Erro ao buscar categorias.` })
   }
 })
 
@@ -42,7 +42,7 @@ categoriesRoute.post('', async (req: Request, res: Response) => {
   }
   catch (error) {
     logger.error(`categoriesRoute create error ==> ${error}`)
-    return res.status(Error).send({ message: `Erro ao criar categoria. ${error.message}` })
+    return res.status(Error).send({ message: `Erro ao criar categoria.` })
   }
 })
 
@@ -65,7 +65,7 @@ categoriesRoute.put('/:id', async (req: Request, res: Response) => {
     return res.status(Success).send({ message: 'Categoria atualizada com sucesso.' })
   } catch (error) {
     logger.error(`categoriesRoute put error ==> ${error}`)
-    return res.status(Error).send({ message: `Erro ao atualizar categoria. ${error.message}` })
+    return res.status(Error).send({ message: `Erro ao atualizar categoria.` })
   }
 })
 
@@ -77,7 +77,7 @@ categoriesRoute.delete('/:id', async (req: Request, res: Response) => {
   }
   catch (error) {
     logger.error(`categoriesRoute delete error ==> ${error}`)
-    return res.status(Error).send({ message: `Erro ao excluir categoria. ${error.message}` })
+    return res.status(Error).send({ message: `Erro ao excluir categoria.` })
   }
 })
 

@@ -8,6 +8,9 @@ class Image {
   @Column({ default: "" })
   fileName: string
 
+  @Column({ default: "" })
+  base64: string
+
   @Column()
   createdDate: Date
 }

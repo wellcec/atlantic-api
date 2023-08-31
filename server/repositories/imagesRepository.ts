@@ -12,7 +12,10 @@ export class ImagesRepository extends BaseMongo {
 
   public async getAll() {
     const repo = await this.imagesRepository
-    return await repo.find()
+    const data: Image[] = await repo.find()
+    return {
+      data
+    }
   }
 
   public async insert(image: Image) {
