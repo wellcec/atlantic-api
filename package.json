@@ -24,6 +24,7 @@
     "mysql2": "^3.2.1",
     "node-cron": "^3.0.2",
     "reflect-metadata": "^0.1.13",
+    "sharp": "^0.32.5",
     "ts-node-dev": "^1.1.8",
     "tsyringe": "^4.7.0",
     "typeorm": "^0.3.16",

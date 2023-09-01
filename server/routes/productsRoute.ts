@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express'
 const fs = require("fs")
 const formidable = require('formidable')
+const sharp = require("sharp")
 
 import { Client } from 'basic-ftp'
 
@@ -32,9 +33,19 @@ productsRoute.post('/upload', async (req: Request, res: Response) => {
       for (const file of files.files || []) {
         await ftp.access(ftpServerInfo)
           .then(() => ftp.cd('/images'))
-          .then(() => ftp.uploadFrom(fs.createReadStream(file.filepath), file.originalFilename))
           .then(async () => {
-            fs.readFile(file.filepath, 'base64', async (_, data) => {
+            let newFile = null
+            let path = ''
+
+            if ((file.size / 1000) > 1000) {
+              newFile = await sharp(file.filepath).png({ quality: 20 })
+              path = newFile?.options?.input?.file || ''
+            } else {
+              newFile = await fs.createReadStream(file.filepath)
+              path = file.filepath
+            }
+
+            fs.readFile(path, 'base64', async (_, data) => {
               const base64Image = `data:image/png;base64,${data}`
 
               const newImage = new Image()
@@ -43,9 +54,13 @@ productsRoute.post('/upload', async (req: Request, res: Response) => {
               newImage.createdDate = new Date()
 
               await controller.insertImages(newImage)
-
-              ftp.close()
             })
+
+            return ftp.uploadFrom(newFile, file.originalFilename)
+          })
+          .then(async (res) => {
+            console.log(res)
+            ftp.close()
           })
       }
 
@@ -55,6 +70,16 @@ productsRoute.post('/upload', async (req: Request, res: Response) => {
   } catch (error) {
     logger.error(`productsRoute upload image error ==> ${error}`)
     return res.status(Error).send({ message: 'Ocorreu um erro ao processar as imagens.' })
+  }
+})
+
+productsRoute.get('/images', async (req: Request, res: Response) => {
+  try {
+    let images = await controller.getAllImages()
+    return res.status(Success).send(images)
+  } catch (error) {
+    logger.error(`productsRoute get all images error ==> ${error}`)
+    return res.status(Error).send({ message: `Erro ao buscar imagens.` })
   }
 })
 
