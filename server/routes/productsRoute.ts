@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express'
-const fs = require("fs")
+const fs = require('fs')
 const formidable = require('formidable')
-const sharp = require("sharp")
+const sharp = require('sharp')
 
 import { Client } from 'basic-ftp'
 
@@ -32,7 +32,6 @@ productsRoute.post('/upload', async (req: Request, res: Response) => {
 
       for (const file of files.files || []) {
         await ftp.access(ftpServerInfo)
-          .then(() => ftp.cd('/images'))
           .then(async () => {
             let newFile = null
             let path = ''
@@ -45,17 +44,11 @@ productsRoute.post('/upload', async (req: Request, res: Response) => {
               path = file.filepath
             }
 
-            fs.readFile(path, 'base64', async (_, data) => {
-              const base64Image = `data:image/png;base64,${data}`
+            const newImage = new Image()
+            newImage.fileName = file.originalFilename
+            newImage.createdDate = new Date()
 
-              const newImage = new Image()
-              newImage.fileName = file.originalFilename
-              newImage.base64 = base64Image
-              newImage.createdDate = new Date()
-
-              await controller.insertImages(newImage)
-            })
-
+            await controller.insertImages(newImage)
             return ftp.uploadFrom(newFile, file.originalFilename)
           })
           .then(async (res) => {
@@ -80,6 +73,48 @@ productsRoute.get('/images', async (req: Request, res: Response) => {
   } catch (error) {
     logger.error(`productsRoute get all images error ==> ${error}`)
     return res.status(Error).send({ message: `Erro ao buscar imagens.` })
+  }
+})
+
+productsRoute.post('/images/tobase64', async (req: Request, res: Response) => {
+  try {
+    const { fileName } = req.body
+
+    const ftp = new Client()
+
+    await ftp.access(ftpServerInfo)
+    const buffer = await ftp.download('temp.png', fileName)
+
+    const imageBuffer = fs.readFileSync('temp.png');
+    const base64Image = imageBuffer.toString('base64');
+
+    // Remover o arquivo temporário
+    fs.unlinkSync('temp.png');
+
+    return res.status(Success).send({ base64Image: base64Image })
+  } catch (error) {
+    logger.error(`productsRoute get uploaded images error ==> ${error}`)
+    return res.status(Error).send({ message: `Erro ao buscar imagens.` })
+  }
+})
+
+productsRoute.delete('/images/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req?.params ?? {}
+
+    const image: Image = await controller.getImageById(id)
+    const ftp = new Client()
+    await ftp.access(ftpServerInfo)
+
+    await ftp.remove(image.fileName)
+
+    await controller.deleteImage(id)
+
+    return res.status(Success).send({ message: `Imagem id: ${id} foi excluída.` })
+  }
+  catch (error) {
+    logger.error(`productsRoute delete image error ==> ${error}`)
+    return res.status(Error).send({ message: `Erro ao excluir imagem.` })
   }
 })
 

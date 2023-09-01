@@ -1,6 +1,7 @@
 import { MongoRepository } from 'typeorm'
 import { BaseMongo } from '../config/BaseMongo'
 import Image from '../schemas/Image'
+import { ObjectId } from 'mongodb'
 
 export class ImagesRepository extends BaseMongo {
   private imagesRepository: Promise<MongoRepository<any>>
@@ -22,6 +23,20 @@ export class ImagesRepository extends BaseMongo {
     const repo = await this.imagesRepository
     const imageToInsert: Image = repo.create(image)
     return await repo.save(imageToInsert)
+  }
+
+  public async getById(id: string) {
+    const repo = await this.imagesRepository
+    return await repo.findOneBy({
+      _id: new ObjectId(id),
+    });
+  }
+
+  public async deleteOne(id: string) {
+    const repo = await this.imagesRepository
+    return await repo.deleteOne({
+      _id: new ObjectId(id),
+    })
   }
 
   public async delete() {
