@@ -10,12 +10,94 @@ import codes from '../constants/codes'
 import { ftpServerInfo } from '../config/FtpConnection'
 import { ProductsController } from '../controllers/productsController'
 import Image from '../schemas/Image'
+import { CreateProductRequest, ProductsList } from '../models/products'
+import Product from '../schemas/Product'
 const { SomethingWrong, Success, Error } = codes
 
 const productsRoute = Router()
 const controller = new ProductsController()
 
-productsRoute.post('/upload', async (req: Request, res: Response) => {
+productsRoute.get('', async (req: Request, res: Response) => {
+  const term = req.query?.term?.toString() ?? ''
+  const page = Number.parseInt(req.query?.page?.toString() ?? '1')
+  const pageSize = Number.parseInt(req.query?.pageSize?.toString() ?? '10')
+
+  try {
+    let products = await controller.getAllProducts(term, page, pageSize)
+    const all: ProductsList[] = products?.data?.map((product) => (
+      {
+        title: product.title,
+        subtitle: product.subtitle,
+        images: product.images,
+        status: product.status
+      }
+    ))
+    return res.status(Success).send({ ...products, data: all })
+  } catch (error) {
+    logger.error(`productsRoute get all list error ==> ${error}`)
+    return res.status(Error).send(error)
+  }
+})
+
+productsRoute.post('', async (req: Request, res: Response) => {
+  try {
+    const {
+      title,
+      subtitle,
+      categories,
+      height,
+      images,
+      length,
+      status,
+      tags,
+      value,
+      valueUnique,
+      variations,
+      weight,
+      width
+    }: CreateProductRequest = req.body
+
+    let product = new Product()
+    product.title = title
+    product.subtitle = subtitle
+    product.categories = categories
+    product.height = height
+    product.images = images
+    product.length = length
+    product.status = status
+    product.tags = tags
+    product.value = value
+    product.valueUnique = valueUnique
+    product.variations = variations
+    product.weight = weight
+    product.width = width
+    product.createdDate = new Date()
+
+    await controller.insertProduct(product)
+    await controller.deleteTempImages()
+
+    return res.status(Success).send(product)
+  }
+  catch (error) {
+    logger.error(`productsRoute create error ==> ${error}`)
+    return res.status(Error).send({ message: `Erro ao criar produto.` })
+  }
+})
+
+productsRoute.get('/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req?.params ?? {}
+
+    const product = await controller.getProductById(id)
+
+    return res.status(Success).send(product)
+  } catch (error) {
+    logger.error(`productsRoute getById error ==> ${error}`)
+    return res.status(Error).send({ message: `Erro ao buscar produto.` })
+  }
+})
+
+productsRoute.post('/images/upload', async (req: Request, res: Response) => {
   try {
     const form = new formidable.IncomingForm()
 
@@ -49,10 +131,7 @@ productsRoute.post('/upload', async (req: Request, res: Response) => {
             newImage.createdDate = new Date()
 
             await controller.insertImages(newImage)
-            return ftp.uploadFrom(newFile, file.originalFilename)
-          })
-          .then(async (res) => {
-            console.log(res)
+            await ftp.uploadFrom(newFile, file.originalFilename, { localEndInclusive: 1, localStart: 0 })
             ftp.close()
           })
       }
@@ -66,7 +145,7 @@ productsRoute.post('/upload', async (req: Request, res: Response) => {
   }
 })
 
-productsRoute.get('/images', async (req: Request, res: Response) => {
+productsRoute.get('/images/temp', async (req: Request, res: Response) => {
   try {
     let images = await controller.getAllImages()
     return res.status(Success).send(images)
@@ -83,8 +162,8 @@ productsRoute.post('/images/tobase64', async (req: Request, res: Response) => {
     const ftp = new Client()
 
     await ftp.access(ftpServerInfo)
-    const buffer = await ftp.download('temp.png', fileName)
-
+    // const buffer = await ftp.download('temp.png', fileName)
+    const buffer = await ftp.appendFrom('temp.png', fileName)
     const imageBuffer = fs.readFileSync('temp.png');
     const base64Image = imageBuffer.toString('base64');
 

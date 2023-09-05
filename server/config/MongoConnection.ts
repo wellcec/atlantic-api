@@ -5,6 +5,7 @@ import Categories from '../schemas/Category'
 import logger from '../logger/logger'
 import Variations from '../schemas/Variation'
 import Image from '../schemas/Image'
+import Product from '../schemas/Product'
 
 export default class MongoConnection {
   private dataSource: DataSource
@@ -14,7 +15,7 @@ export default class MongoConnection {
       type: 'mongodb',
       host: env.MONGODB_URL,
       database: 'bookmagic',
-      entities: [Users, Categories, Variations, Image],
+      entities: [Users, Categories, Variations, Image, Product],
       useUnifiedTopology: true,
       synchronize: true,
       logging: false,
