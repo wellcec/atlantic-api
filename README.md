@@ -1,2 +1,2 @@
 # atlantic-api
-A api for administration portal for a ecommerce.
+(Working in progress) A api for administration portal for a ecommerce.
