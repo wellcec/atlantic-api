@@ -4,6 +4,15 @@ import Variation from './Variation'
 import Image from './Image'
 import { StatusProductType } from '../models/products'
 
+const defaultStatus = {
+  isActive: false,
+  isHighlighted: false,
+  isLaunch: false,
+  isSale: false,
+  isBestSeller: false,
+  isPreOrder: false
+}
+
 @Entity('products')
 class Product {
   @ObjectIdColumn()
@@ -45,7 +54,7 @@ class Product {
   @Column({ default: [] })
   tags: string[]
 
-  @Column({ default: null })
+  @Column({ default: defaultStatus })
   status: StatusProductType
 
   @Column()

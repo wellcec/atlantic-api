@@ -53,10 +53,15 @@ export class ProductsRepository extends BaseMongo {
     }
   }
 
-  public async insert(image: Product): Promise<Product> {
+  public async insert(product: Product): Promise<Product> {
     const repo = await this.productsRepository
-    const productToInsert: Product = repo.create(image)
+    const productToInsert: Product = repo.create(product)
     return await repo.save(productToInsert)
+  }
+
+  public async update(id: string, product: Product) {
+    const repo = await this.productsRepository
+    return await repo.update(id, product)
   }
 
   public async getById(id: string): Promise<Product> {
@@ -69,7 +74,7 @@ export class ProductsRepository extends BaseMongo {
   public async deleteOne(id: string) {
     const repo = await this.productsRepository
     return await repo.deleteOne({
-      _id: new ObjectId(id),
+      id: new ObjectId(id),
     })
   }
 }

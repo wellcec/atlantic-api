@@ -32,6 +32,14 @@ export class ProductsController {
     return await this.productsRepository.insert(product)
   }
 
+  public async updateProduct(id: string, product: Product) {
+    return await this.productsRepository.update(id, product)
+  }
+
+  public async deleteProduct(id: string) {
+    return await this.productsRepository.deleteOne(id)
+  }
+
   public async insertImages(image: Image) {
     return await this.imagesRepository.insert(image)
   }

@@ -10,7 +10,7 @@ import codes from '../constants/codes'
 import { ftpServerInfo } from '../config/FtpConnection'
 import { ProductsController } from '../controllers/productsController'
 import Image from '../schemas/Image'
-import { CreateProductRequest, ProductsList } from '../models/products'
+import { CreateProductRequest, ProductsList, UpdateStatusRequest } from '../models/products'
 import Product from '../schemas/Product'
 const { SomethingWrong, Success, Error } = codes
 
@@ -26,12 +26,14 @@ productsRoute.get('', async (req: Request, res: Response) => {
     let products = await controller.getAllProducts(term, page, pageSize)
     const all: ProductsList[] = products?.data?.map((product) => (
       {
+        id: product.id,
         title: product.title,
         subtitle: product.subtitle,
         images: product.images,
         status: product.status
       }
     ))
+
     return res.status(Success).send({ ...products, data: all })
   } catch (error) {
     logger.error(`productsRoute get all list error ==> ${error}`)
@@ -64,7 +66,11 @@ productsRoute.post('', async (req: Request, res: Response) => {
     product.height = height
     product.images = images
     product.length = length
-    product.status = status
+    product.status = {
+      ...status,
+      isActive: false,
+      isHighlighted: false,
+    }
     product.tags = tags
     product.value = value
     product.valueUnique = valueUnique
@@ -81,6 +87,49 @@ productsRoute.post('', async (req: Request, res: Response) => {
   catch (error) {
     logger.error(`productsRoute create error ==> ${error}`)
     return res.status(Error).send({ message: `Erro ao criar produto.` })
+  }
+})
+
+productsRoute.put('/status/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req?.params ?? {}
+    const { status }: UpdateStatusRequest = req.body
+
+    const product = await controller.getProductById(id)
+    product.status = {
+      ...product.status,
+      ...status
+    }
+
+    const result = await controller.updateProduct(id, product)
+
+    if (result.affected > 0) {
+      return res.status(Success).send(result)
+    }
+
+    return res.status(SomethingWrong).send({ message: 'Nenhum produto foi atualizado.' })
+  }
+  catch (error) {
+    logger.error(`productsRoute update status error ==> ${error}`)
+    return res.status(Error).send({ message: `Erro ao atualizar status do produto.` })
+  }
+})
+
+productsRoute.delete('/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req?.params ?? {}
+
+    const result = await controller.deleteProduct(id)
+
+    if (result.deletedCount > 0) {
+      return res.status(Success).send(result)
+    }
+
+    return res.status(SomethingWrong).send({ message: 'Nenhum produto foi excluído.' })
+  }
+  catch (error) {
+    logger.error(`productsRoute delete error ==> ${error}`)
+    return res.status(Error).send({ message: `Erro ao excluir o produto.` })
   }
 })
 
