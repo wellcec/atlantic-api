@@ -22,7 +22,8 @@ export class ImagesRepository extends BaseMongo {
   public async insert(image: Image) {
     const repo = await this.imagesRepository
     const imageToInsert: Image = repo.create(image)
-    return await repo.save(imageToInsert)
+    const result: Image = await repo.save(imageToInsert)
+    return result
   }
 
   public async getById(id: string) {

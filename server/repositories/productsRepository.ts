@@ -74,7 +74,7 @@ export class ProductsRepository extends BaseMongo {
   public async deleteOne(id: string) {
     const repo = await this.productsRepository
     return await repo.deleteOne({
-      id: new ObjectId(id),
+      _id: new ObjectId(id),
     })
   }
 }

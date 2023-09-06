@@ -90,6 +90,52 @@ productsRoute.post('', async (req: Request, res: Response) => {
   }
 })
 
+productsRoute.put('/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req?.params ?? {}
+
+    const {
+      title,
+      subtitle,
+      categories,
+      height,
+      images,
+      length,
+      status,
+      tags,
+      value,
+      valueUnique,
+      variations,
+      weight,
+      width
+    }: CreateProductRequest = req.body
+
+    let product = new Product()
+    product.title = title
+    product.subtitle = subtitle
+    product.categories = categories
+    product.height = height
+    product.images = images
+    product.length = length
+    product.status = status
+    product.tags = tags
+    product.value = value
+    product.valueUnique = valueUnique
+    product.variations = variations
+    product.weight = weight
+    product.width = width
+    product.updatedDate = new Date()
+
+    await controller.updateProduct(id, product)
+
+    return res.status(Success).send(product)
+  }
+  catch (error) {
+    logger.error(`productsRoute update error ==> ${error}`)
+    return res.status(Error).send({ message: `Erro ao atualizar produto.` })
+  }
+})
+
 productsRoute.put('/status/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req?.params ?? {}
@@ -160,6 +206,7 @@ productsRoute.post('/images/upload', async (req: Request, res: Response) => {
       }
 
       const ftp = new Client()
+      let result = new Image()
 
       for (const file of files.files || []) {
         await ftp.access(ftpServerInfo)
@@ -179,13 +226,13 @@ productsRoute.post('/images/upload', async (req: Request, res: Response) => {
             newImage.fileName = file.originalFilename
             newImage.createdDate = new Date()
 
-            await controller.insertImages(newImage)
+            result = await controller.insertImages(newImage)
             await ftp.uploadFrom(newFile, file.originalFilename, { localEndInclusive: 1, localStart: 0 })
             ftp.close()
           })
       }
 
-      return res.status(Success).send({ message: 'Arquivos enviados com sucesso.' })
+      return res.status(Success).send(result)
     })
 
   } catch (error) {

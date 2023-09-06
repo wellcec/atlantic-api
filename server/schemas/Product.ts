@@ -31,16 +31,16 @@ class Product {
   valueUnique: number
 
   @Column({ default: 0 })
-  weight: string
+  weight: number
 
   @Column({ default: 0 })
-  height: string
+  height: number
 
   @Column({ default: 0 })
-  length: string
+  length: number
 
   @Column({ default: "" })
-  width: string
+  width: number
 
   @Column({ default: [] })
   categories: Category[]
