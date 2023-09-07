@@ -9,8 +9,8 @@ import logger from '../logger/logger'
 import codes from '../constants/codes'
 import { ftpServerInfo } from '../config/FtpConnection'
 import { ProductsController } from '../controllers/productsController'
+import { CreateProductRequest, ProductsList, UpdateProductRequest, UpdateStatusRequest } from '../models/products'
 import Image from '../schemas/Image'
-import { CreateProductRequest, ProductsList, UpdateStatusRequest } from '../models/products'
 import Product from '../schemas/Product'
 const { SomethingWrong, Success, Error } = codes
 
@@ -30,7 +30,9 @@ productsRoute.get('', async (req: Request, res: Response) => {
         title: product.title,
         subtitle: product.subtitle,
         images: product.images,
-        status: product.status
+        status: product.status,
+        value: product.value,
+        valueUnique: product.valueUnique
       }
     ))
 
@@ -126,7 +128,11 @@ productsRoute.put('/:id', async (req: Request, res: Response) => {
     product.width = width
     product.updatedDate = new Date()
 
+    logger.info(`productsRoute update ==> updating...`)
     await controller.updateProduct(id, product)
+
+    logger.info(`productsRoute update error ==> clearing temp images...`)
+    const resultDelete = await controller.deleteTempImages()
 
     return res.status(Success).send(product)
   }
@@ -141,7 +147,7 @@ productsRoute.put('/status/:id', async (req: Request, res: Response) => {
     const { id } = req?.params ?? {}
     const { status }: UpdateStatusRequest = req.body
 
-    const product = await controller.getProductById(id)
+    const product: UpdateProductRequest = await controller.getProductById(id)
     product.status = {
       ...product.status,
       ...status
@@ -241,7 +247,7 @@ productsRoute.post('/images/upload', async (req: Request, res: Response) => {
   }
 })
 
-productsRoute.get('/images/temp', async (req: Request, res: Response) => {
+productsRoute.get('/images/temporary', async (req: Request, res: Response) => {
   try {
     let images = await controller.getAllImages()
     return res.status(Success).send(images)
@@ -273,7 +279,45 @@ productsRoute.post('/images/tobase64', async (req: Request, res: Response) => {
   }
 })
 
-productsRoute.delete('/images/:id', async (req: Request, res: Response) => {
+productsRoute.delete('/:idProduct/images/:idImage', async (req: Request, res: Response) => {
+  try {
+    const { idProduct, idImage } = req?.params ?? {}
+
+    if (!idProduct || !idImage) {
+      return res.status(SomethingWrong).send({ message: 'Parâmetros não informados.' })
+    }
+
+    const product: Product = await controller.getProductById(idProduct)
+    const images: Image[] = product?.images ?? []
+
+    if (images.length === 1) {
+      return res.status(SomethingWrong).send({ message: 'Produto deve possuir ao menos uma imagem.' })
+    }
+
+    const image = images?.find((img) => img?.id?.toString() === idImage)
+    const newImages = images?.filter((img) => img?.id?.toString() !== idImage)
+
+    if (image) {
+      const ftp = new Client()
+      await ftp.access(ftpServerInfo)
+      await ftp.remove(image.fileName)
+
+      const updatedProduct: UpdateProductRequest = product
+      updatedProduct.images = newImages
+      updatedProduct.updatedDate = new Date()
+
+      await controller.updateProduct(idProduct, updatedProduct)
+
+      return res.status(Success).send({ message: `Imagem id: ${idImage} foi excluída.` })
+    }
+  }
+  catch (error) {
+    logger.error(`productsRoute delete image temporary error ==> ${error}`)
+    return res.status(Error).send({ message: `Erro ao excluir imagem temporária.` })
+  }
+})
+
+productsRoute.delete('/images/temporary/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req?.params ?? {}
 
@@ -285,11 +329,11 @@ productsRoute.delete('/images/:id', async (req: Request, res: Response) => {
 
     await controller.deleteImage(id)
 
-    return res.status(Success).send({ message: `Imagem id: ${id} foi excluída.` })
+    return res.status(Success).send({ message: `Imagem id: ${id} temporária foi excluída.` })
   }
   catch (error) {
-    logger.error(`productsRoute delete image error ==> ${error}`)
-    return res.status(Error).send({ message: `Erro ao excluir imagem.` })
+    logger.error(`productsRoute delete image temporary error ==> ${error}`)
+    return res.status(Error).send({ message: `Erro ao excluir imagem temporária.` })
   }
 })
 

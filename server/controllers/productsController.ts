@@ -1,3 +1,4 @@
+import { UpdateProductRequest } from '../models/products'
 import { ImagesRepository } from '../repositories/imagesRepository'
 import { ProductsRepository } from '../repositories/productsRepository'
 import Image from '../schemas/Image'
@@ -32,7 +33,7 @@ export class ProductsController {
     return await this.productsRepository.insert(product)
   }
 
-  public async updateProduct(id: string, product: Product) {
+  public async updateProduct(id: string, product: Product | UpdateProductRequest) {
     return await this.productsRepository.update(id, product)
   }
 

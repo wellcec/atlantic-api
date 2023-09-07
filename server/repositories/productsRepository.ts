@@ -2,7 +2,7 @@ import { MongoRepository } from 'typeorm'
 import { BaseMongo } from '../config/BaseMongo'
 import Product from '../schemas/Product'
 import { ObjectId } from 'mongodb'
-import { ProductsList } from '../models/products'
+import { ProductsList, UpdateProductRequest } from '../models/products'
 
 export class ProductsRepository extends BaseMongo {
   private productsRepository: Promise<MongoRepository<any>>
@@ -59,7 +59,7 @@ export class ProductsRepository extends BaseMongo {
     return await repo.save(productToInsert)
   }
 
-  public async update(id: string, product: Product) {
+  public async update(id: string, product: Product | UpdateProductRequest) {
     const repo = await this.productsRepository
     return await repo.update(id, product)
   }

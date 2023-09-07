@@ -42,6 +42,8 @@ export class ImagesRepository extends BaseMongo {
 
   public async delete() {
     const repo = await this.imagesRepository
-    return await repo.clear()
+    return await repo.deleteMany({
+      fileName: { $ne: '' }
+    })
   }
 }

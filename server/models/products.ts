@@ -11,6 +11,8 @@ export type StatusProductType = {
 
 export type CreateProductRequest = Omit<Product, "id" | "_id" | "createdDate" | "updatedDate">
 
-export type ProductsList = Pick<Product, "id" | "title" | "subtitle" | 'images' | 'status'>
+export type UpdateProductRequest = Omit<Product, "id" | "_id" | "createdDate">
+
+export type ProductsList = Pick<Product, "id" | "title" | "subtitle" | 'images' | 'status' | 'value' | 'valueUnique'>
 
 export type UpdateStatusRequest = Pick<Product, 'status'>
