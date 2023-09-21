@@ -1,8 +1,8 @@
-import { Column, ObjectIdColumn, ObjectId } from 'typeorm'
+import { Column } from 'typeorm'
 
 class SubCategory {
-  @ObjectIdColumn()
-  id: ObjectId
+  @Column({ default: "" })
+  id: string
 
   @Column({ default: "" })
   name: string

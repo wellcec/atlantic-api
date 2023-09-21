@@ -5,7 +5,7 @@ const sharp = require('sharp')
 import { Client } from 'basic-ftp'
 
 import { ftpServerInfo } from '../config/FtpConnection'
-import { CreateProductRequest, ProductsList, UpdateProductRequest, UpdateStatusRequest } from '../models/products'
+import { CreateProductRequest, ProductsByCategoryList, ProductsList, UpdateProductRequest, UpdateStatusRequest } from '../models/products'
 import { ImagesRepository } from '../repositories/imagesRepository'
 import { ProductsRepository } from '../repositories/productsRepository'
 import Image from '../schemas/Image'
@@ -13,6 +13,8 @@ import Product from '../schemas/Product'
 
 import codes from '../constants/codes'
 import logger from '../logger/logger'
+import { genId } from '../shared/utils'
+
 const { Success, Error, SomethingWrong } = codes
 
 export class ProductsController {
@@ -69,6 +71,7 @@ export class ProductsController {
       }: CreateProductRequest = req.body
 
       let product = new Product()
+      product.id = genId()
       product.title = title
       product.subtitle = subtitle
       product.categories = categories
@@ -236,6 +239,7 @@ export class ProductsController {
               }
 
               const newImage = new Image()
+              newImage.id = genId()
               newImage.fileName = file.originalFilename
               newImage.createdDate = new Date()
 
@@ -341,6 +345,31 @@ export class ProductsController {
     catch (error) {
       logger.error(`productsRoute delete image temporary error ==> ${error}`)
       return res.status(Error).send({ message: `Erro ao excluir imagem temporária.` })
+    }
+  }
+
+  public getProductsByCategory = async (req: Request, res: Response) => {
+    try {
+      const { idCategory } = req?.params ?? {}
+
+      let products = await this.productsRepository.getByCategoryId(idCategory)
+
+      const all: ProductsByCategoryList[] = products?.map((product) => (
+        {
+          id: product.id,
+          title: product.title
+        }
+      ))
+
+      return res.status(Success).send({
+        data: all,
+        page: 1,
+        pageSize: 1000,
+        count: all.length
+      })
+    } catch (error) {
+      logger.error(`productsRoute get by category list error ==> ${error}`)
+      return res.status(Error).send(error)
     }
   }
 }

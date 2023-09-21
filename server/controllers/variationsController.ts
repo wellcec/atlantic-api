@@ -5,6 +5,7 @@ import { CreateVariationRequest, GetAllVariationsResponse } from '../models/vari
 import { VariationsRepository } from '../repositories/variationsRepository'
 import Variation from '../schemas/Variation'
 import logger from '../logger/logger'
+import { genId } from '../shared/utils'
 
 const { Success, Error, SomethingWrong } = codes
 
@@ -41,6 +42,7 @@ export class VariationsController {
       }
 
       let variation = new Variation()
+      variation.id = genId()
       variation.name = name
       variation.createdDate = new Date()
 

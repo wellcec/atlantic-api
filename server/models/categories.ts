@@ -1,8 +1,8 @@
-import Categories from '../schemas/Category'
-import SubCategories from '../schemas/SubCategory'
+import Category from '../schemas/Category'
+import SubCategory from '../schemas/SubCategory'
 
 type GetAllCategoriesResponse = {
-  data: Categories[]
+  data: Category[]
   page: number
   pageSize: number
   count: number
@@ -10,7 +10,7 @@ type GetAllCategoriesResponse = {
 
 type CreateCategoriesRequest = {
   name: string
-  subCategories: SubCategories[]
+  subCategories: SubCategory[]
 }
 
 export {

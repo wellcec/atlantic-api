@@ -4,7 +4,10 @@ import SubCategory from './SubCategory'
 @Entity('categories')
 class Category {
   @ObjectIdColumn()
-  id: ObjectId
+  _id?: ObjectId
+
+  @Column({ default: "" })
+  id: string
 
   @Column({ default: "" })
   name: string

@@ -4,6 +4,7 @@ import { UsersRepository } from '../repositories/usersRepository'
 import User from '../schemas/User'
 import codes from '../constants/codes'
 import logger from '../logger/logger'
+import { genId } from '../shared/utils'
 const { Success, Error } = codes
 
 export class UsersController {
@@ -32,6 +33,7 @@ export class UsersController {
       const { name, document }: CreateUserRequest = req.body
 
       let user = new User()
+      user.id = genId()
       user.name = name
       user.document = document
       user.createdDate = new Date()

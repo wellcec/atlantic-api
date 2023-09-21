@@ -1,5 +1,4 @@
 import { MongoRepository } from 'typeorm'
-import { ObjectId } from 'mongodb'
 import { BaseMongo } from '../config/BaseMongo'
 import Category from '../schemas/Category'
 
@@ -25,7 +24,7 @@ export class CategoriesRepository extends BaseMongo {
         where: {
           $or: [
             { name: regex_like },
-            { 'subCategory.name': regex_like },
+            { 'subCategories.name': regex_like },
           ],
         },
       }
@@ -61,16 +60,16 @@ export class CategoriesRepository extends BaseMongo {
 
   public async update(id: string, objToUpdate: Category) {
     const repo = await this.categoriesRepository
-    const result = await repo.update(id, objToUpdate)
+    const result = await repo.update({
+      id: { $eq: id }
+    }, objToUpdate)
 
     return result
   }
 
   public async delete(id: string) {
     const repo = await this.categoriesRepository
-    const result = await repo.deleteOne({
-      _id: new ObjectId(id),
-    })
+    const result = await repo.deleteOne({ id })
 
     return result
   }

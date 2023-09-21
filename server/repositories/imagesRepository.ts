@@ -28,16 +28,12 @@ export class ImagesRepository extends BaseMongo {
 
   public async getById(id: string) {
     const repo = await this.imagesRepository
-    return await repo.findOneBy({
-      _id: new ObjectId(id),
-    });
+    return await repo.findOneBy({ id });
   }
 
   public async deleteOne(id: string) {
     const repo = await this.imagesRepository
-    return await repo.deleteOne({
-      _id: new ObjectId(id),
-    })
+    return await repo.deleteOne({ id })
   }
 
   public async delete() {

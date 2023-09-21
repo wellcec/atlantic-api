@@ -3,7 +3,10 @@ import { Column, ObjectIdColumn, ObjectId, Entity } from 'typeorm'
 @Entity('images')
 class Image {
   @ObjectIdColumn()
-  id: ObjectId
+  _id: ObjectId
+
+  @Column({ default: "" })
+  id: string
 
   @Column({ default: "" })
   fileName: string

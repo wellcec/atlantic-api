@@ -1,18 +1,22 @@
 import { Request, Response } from 'express'
 import { CreateCategoriesRequest, GetAllCategoriesResponse } from '../models/categories'
 import { CategoriesRepository } from '../repositories/categoriesRepository'
+import { ProductsRepository } from '../repositories/productsRepository'
 import Category from '../schemas/Category'
 import codes from '../constants/codes'
 import logger from '../logger/logger'
 import { ObjectId } from 'mongodb'
+import { genId } from '../shared/utils'
 
 const { Success, Error } = codes
 
 export class CategoriesController {
   private categoriesRepository: CategoriesRepository
+  private productsRepository: ProductsRepository
 
   constructor() {
     this.categoriesRepository = new CategoriesRepository()
+    this.productsRepository = new ProductsRepository()
   }
 
   public getAll = async (req: Request, res: Response) => {
@@ -22,6 +26,11 @@ export class CategoriesController {
 
     try {
       let categories: GetAllCategoriesResponse = await this.categoriesRepository.getAll(term, page, pageSize)
+      categories.data = categories.data.map((item) => {
+        const { _id, ...rest } = item
+        return rest
+      })
+
       return res.status(Success).send(categories)
     } catch (error) {
       logger.error(`categoriesRoute get error ==> ${error}`)
@@ -34,9 +43,10 @@ export class CategoriesController {
       const { name, subCategories }: CreateCategoriesRequest = req.body
 
       let category = new Category()
+      category.id = genId()
       category.name = name
       category.subCategories = subCategories.map((item) => ({
-        id: new ObjectId(),
+        id: genId(),
         name: item.name,
         createdDate: new Date()
       }))
@@ -58,15 +68,40 @@ export class CategoriesController {
       const { name, subCategories }: CreateCategoriesRequest = req.body
 
       let category = new Category()
+      category.id = genId(id)
       category.name = name
 
       category.subCategories = subCategories.map((item) => ({
-        id: item?.id ?? new ObjectId(),
+        id: genId(item?.id),
         name: item?.name,
         createdDate: item?.createdDate ?? new Date()
       }))
 
-      await await this.categoriesRepository.update(id, category)
+      const products = await this.productsRepository.getByCategoryId(id)
+      if (products.length > 0) {
+        for (const currentProduct of products) {
+          const idProduct = currentProduct.id.toString()
+          const categories = currentProduct.categories.filter((item) => item.id.toString() !== id)
+          const existentCategory = currentProduct.categories.find((item) => item.id.toString() === id)
+
+          if (existentCategory) {
+            const idsSubCats = category.subCategories.map((item) => item.id.toString())
+            const newSubcategories = existentCategory.subCategories.filter((item) => idsSubCats.includes(item.id.toString()))
+
+            categories.push({
+              ...category,
+              subCategories: newSubcategories
+            })
+          }
+
+          await this.productsRepository.update(idProduct, {
+            ...currentProduct,
+            categories
+          })
+        }
+      }
+
+      await this.categoriesRepository.update(id, category)
       return res.status(Success).send({ message: 'Categoria atualizada com sucesso.' })
     } catch (error) {
       logger.error(`categoriesRoute put error ==> ${error}`)

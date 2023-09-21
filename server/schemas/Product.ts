@@ -16,7 +16,10 @@ const defaultStatus = {
 @Entity('products')
 class Product {
   @ObjectIdColumn()
-  id: ObjectId
+  _id: ObjectId
+
+  @Column({ default: "" })
+  id: string
 
   @Column({ default: "" })
   title: string

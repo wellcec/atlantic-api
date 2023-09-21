@@ -60,9 +60,7 @@ export class VariationsRepository extends BaseMongo {
 
   public async delete(id: string) {
     const repo = await this.variationsRepository
-    const result = await repo.deleteOne({
-      _id: new ObjectId(id),
-    })
+    const result = await repo.deleteOne({ id })
 
     return result
   }
