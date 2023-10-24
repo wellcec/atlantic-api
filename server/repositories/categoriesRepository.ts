@@ -1,6 +1,7 @@
 import { MongoRepository } from 'typeorm'
 import { BaseMongo } from '../config/BaseMongo'
 import Category from '../schemas/Category'
+import { ObjectId } from 'mongodb'
 
 export class CategoriesRepository extends BaseMongo {
   private categoriesRepository: Promise<MongoRepository<any>>
@@ -58,18 +59,23 @@ export class CategoriesRepository extends BaseMongo {
     return result
   }
 
-  public async update(id: string, objToUpdate: Category) {
+  public async getById(id: ObjectId): Promise<Category> {
     const repo = await this.categoriesRepository
-    const result = await repo.update({
-      id: { $eq: id }
-    }, objToUpdate)
+    return await repo.findOneBy({
+      _id: id,
+    });
+  }
+
+  public async update(id: ObjectId, objToUpdate: Category) {
+    const repo = await this.categoriesRepository
+    const result = await repo.update(id, objToUpdate)
 
     return result
   }
 
-  public async delete(id: string) {
+  public async delete(id: ObjectId) {
     const repo = await this.categoriesRepository
-    const result = await repo.deleteOne({ id })
+    const result = await repo.delete(id)
 
     return result
   }

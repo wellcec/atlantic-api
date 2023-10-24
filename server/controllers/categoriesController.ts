@@ -5,7 +5,6 @@ import { ProductsRepository } from '../repositories/productsRepository'
 import Category from '../schemas/Category'
 import codes from '../constants/codes'
 import logger from '../logger/logger'
-import { ObjectId } from 'mongodb'
 import { genId } from '../shared/utils'
 
 const { Success, Error } = codes
@@ -26,10 +25,6 @@ export class CategoriesController {
 
     try {
       let categories: GetAllCategoriesResponse = await this.categoriesRepository.getAll(term, page, pageSize)
-      categories.data = categories.data.map((item) => {
-        const { _id, ...rest } = item
-        return rest
-      })
 
       return res.status(Success).send(categories)
     } catch (error) {
@@ -43,10 +38,9 @@ export class CategoriesController {
       const { name, subCategories }: CreateCategoriesRequest = req.body
 
       let category = new Category()
-      category.id = genId()
       category.name = name
       category.subCategories = subCategories.map((item) => ({
-        id: genId(),
+        _id: genId(),
         name: item.name,
         createdDate: new Date()
       }))
@@ -64,36 +58,39 @@ export class CategoriesController {
   public update = async (req: Request, res: Response) => {
     try {
       const { id } = req?.params ?? {}
+      const currentId = genId(id)
 
       const { name, subCategories }: CreateCategoriesRequest = req.body
 
-      let category = new Category()
-      category.id = genId(id)
-      category.name = name
+      let existentCategory = await this.categoriesRepository.getById(currentId)
+      existentCategory.name = name
+      existentCategory.updatedDate = new Date()
 
-      category.subCategories = subCategories.map((item) => ({
-        id: genId(item?.id),
+      existentCategory.subCategories = subCategories.map((item) => ({
+        _id: genId(item?._id),
         name: item?.name,
         createdDate: item?.createdDate ?? new Date()
       }))
 
-      const products = await this.productsRepository.getByCategoryId(id)
+      logger.info(`categoriesRoute put updating products...`)
+      const products = await this.productsRepository.getByCategoryId(currentId)
       if (products.length > 0) {
         for (const currentProduct of products) {
-          const idProduct = currentProduct.id.toString()
-          const categories = currentProduct.categories.filter((item) => item.id.toString() !== id)
-          const existentCategory = currentProduct.categories.find((item) => item.id.toString() === id)
+          const idProduct = currentProduct._id
+          const categories = currentProduct.categories.filter((item) => item._id.toString() !== id)
+          const existentCategoryProduct = currentProduct.categories.find((item) => item._id.toString() === id)
 
-          if (existentCategory) {
-            const idsSubCats = category.subCategories.map((item) => item.id.toString())
-            const newSubcategories = existentCategory.subCategories.filter((item) => idsSubCats.includes(item.id.toString()))
+          if (existentCategoryProduct) {
+            const idsSubCats = existentCategoryProduct.subCategories.map((item) => item._id)
+            const newSubcategories = existentCategoryProduct.subCategories.filter((item) => idsSubCats.includes(item._id))
 
             categories.push({
-              ...category,
+              ...existentCategory,
               subCategories: newSubcategories
             })
           }
 
+          console.log('categories', JSON.stringify(categories))
           await this.productsRepository.update(idProduct, {
             ...currentProduct,
             categories
@@ -101,7 +98,8 @@ export class CategoriesController {
         }
       }
 
-      await this.categoriesRepository.update(id, category)
+      logger.info(`categoriesRoute put updating category...`)
+      await this.categoriesRepository.update(currentId, existentCategory)
       return res.status(Success).send({ message: 'Categoria atualizada com sucesso.' })
     } catch (error) {
       logger.error(`categoriesRoute put error ==> ${error}`)
@@ -112,7 +110,7 @@ export class CategoriesController {
   public delete = async (req: Request, res: Response) => {
     try {
       const { id } = req?.params ?? {}
-      const result = await this.categoriesRepository.delete(id)
+      const result = await this.categoriesRepository.delete(genId(id))
       return res.status(Success).send({ message: `Categoria id:${id} foi excluído.`, ...result })
     }
     catch (error) {

@@ -2,7 +2,7 @@ import { Entity, Column, ObjectIdColumn, ObjectId } from 'typeorm'
 import Category from './Category'
 import Variation from './Variation'
 import Image from './Image'
-import { StatusProductType } from '../models/products'
+import { ShippingType, StatusProductType } from '../models/products'
 
 const defaultStatus = {
   isActive: false,
@@ -17,9 +17,6 @@ const defaultStatus = {
 class Product {
   @ObjectIdColumn()
   _id: ObjectId
-
-  @Column({ default: "" })
-  id: string
 
   @Column({ default: "" })
   title: string
@@ -59,6 +56,9 @@ class Product {
 
   @Column({ default: defaultStatus })
   status: StatusProductType
+
+  @Column({ default: 'free' })
+  shipping: ShippingType
 
   @Column()
   createdDate: Date

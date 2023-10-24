@@ -3,9 +3,9 @@ import { Client } from 'basic-ftp'
 export const ftpClient = new Client()
 
 export const ftpServerInfo = {
-  host: '192.168.2.11',
+  host: '192.168.2.8',
   user: 'ftp-user',
-  password: 'aW50ZXJlc3RyZWxhcg==', // to decode
+  password: 'interestrelar', // to decode
   port: 21,
 }
 

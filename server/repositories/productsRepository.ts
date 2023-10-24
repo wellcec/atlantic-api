@@ -59,32 +59,32 @@ export class ProductsRepository extends BaseMongo {
     return await repo.save(productToInsert)
   }
 
-  public async update(id: string, product: Product | UpdateProductRequest) {
+  public async update(id: ObjectId, product: Product | UpdateProductRequest) {
     const repo = await this.productsRepository
-    return await repo.update({
-      id: { $eq: id }
-    }, product)
+    return await repo.update(id, product)
   }
 
-  public async getById(id: string): Promise<Product> {
+  public async getById(id: ObjectId): Promise<Product> {
     const repo = await this.productsRepository
-    return await repo.findOneBy({ id });
+    return await repo.findOneBy({
+      _id: id,
+    });
   }
 
-  public async getByCategoryId(id: string): Promise<Product[]> {
+  public async getByCategoryId(id: ObjectId): Promise<Product[]> {
     const repo = await this.productsRepository
 
     return await repo.find({
       where: {
         $or: [
-          { 'categories.id': id },
+          { 'categories._id': id },
         ],
       }
     });
   }
 
-  public async deleteOne(id: string) {
+  public async delete(id: ObjectId) {
     const repo = await this.productsRepository
-    return await repo.deleteOne({ id })
+    return await repo.delete(id)
   }
 }

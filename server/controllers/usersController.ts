@@ -4,11 +4,11 @@ import { UsersRepository } from '../repositories/usersRepository'
 import User from '../schemas/User'
 import codes from '../constants/codes'
 import logger from '../logger/logger'
-import { genId } from '../shared/utils'
+import { genId, removeId } from '../shared/utils'
 const { Success, Error } = codes
 
 export class UsersController {
-  private usersRepository
+  private usersRepository: UsersRepository
 
   constructor() {
     this.usersRepository = new UsersRepository()
@@ -21,6 +21,8 @@ export class UsersController {
 
     try {
       let users = await this.usersRepository.getAll(term, page, pageSize)
+      users.data = users.data.map(removeId)
+
       return res.status(Success).send(users)
     } catch (error) {
       logger.error(`usersRouter get error ==> ${error}`)
@@ -33,7 +35,6 @@ export class UsersController {
       const { name, document }: CreateUserRequest = req.body
 
       let user = new User()
-      user.id = genId()
       user.name = name
       user.document = document
       user.createdDate = new Date()
@@ -57,7 +58,7 @@ export class UsersController {
       user.name = name
       user.document = document
 
-      await this.usersRepository.update(id, user)
+      await this.usersRepository.update(genId(id), user)
       return res.status(Success).send({ message: 'Usuário atualizado com sucesso.' })
     } catch (error) {
       logger.error(`usersRouter put error ==> ${error}`)
@@ -68,7 +69,7 @@ export class UsersController {
   public delete = async (req: Request, res: Response) => {
     try {
       const { id } = req?.params ?? {}
-      const result = await this.usersRepository.delete(id)
+      const result = await this.usersRepository.delete(genId(id))
       return res.status(Success).send({ message: `Usuário id:${id} foi excluído.`, ...result })
     }
     catch (error) {

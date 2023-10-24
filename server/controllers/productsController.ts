@@ -35,7 +35,7 @@ export class ProductsController {
       let products = await this.productsRepository.getAll(term, page, pageSize)
       const all: ProductsList[] = products?.data?.map((product) => (
         {
-          id: product.id,
+          _id: product._id,
           title: product.title,
           subtitle: product.subtitle,
           images: product.images,
@@ -67,11 +67,11 @@ export class ProductsController {
         valueUnique,
         variations,
         weight,
-        width
+        width,
+        shipping
       }: CreateProductRequest = req.body
 
       let product = new Product()
-      product.id = genId()
       product.title = title
       product.subtitle = subtitle
       product.categories = categories
@@ -89,6 +89,7 @@ export class ProductsController {
       product.variations = variations
       product.weight = weight
       product.width = width
+      product.shipping = shipping
       product.createdDate = new Date()
 
       await this.productsRepository.insert(product)
@@ -105,6 +106,7 @@ export class ProductsController {
   public update = async (req: Request, res: Response) => {
     try {
       const { id } = req?.params ?? {}
+      const currentId = genId(id)
 
       const {
         title,
@@ -119,10 +121,11 @@ export class ProductsController {
         valueUnique,
         variations,
         weight,
-        width
+        width,
+        shipping
       }: CreateProductRequest = req.body
 
-      let product = new Product()
+      let product = await this.productsRepository.getById(currentId)
       product.title = title
       product.subtitle = subtitle
       product.categories = categories
@@ -136,10 +139,11 @@ export class ProductsController {
       product.variations = variations
       product.weight = weight
       product.width = width
+      product.shipping = shipping
       product.updatedDate = new Date()
 
       logger.info(`productsRoute update ==> updating...`)
-      await this.productsRepository.update(id, product)
+      await this.productsRepository.update(currentId, product)
 
       logger.info(`productsRoute update error ==> clearing temp images...`)
       await this.imagesRepository.delete()
@@ -155,15 +159,16 @@ export class ProductsController {
   public updateStatus = async (req: Request, res: Response) => {
     try {
       const { id } = req?.params ?? {}
+      const currentId = genId(id)
       const { status }: UpdateStatusRequest = req.body
 
-      const product: UpdateProductRequest = await this.productsRepository.getById(id)
+      const product: UpdateProductRequest = await this.productsRepository.getById(currentId)
       product.status = {
         ...product.status,
         ...status
       }
 
-      const result = await this.productsRepository.update(id, product)
+      const result = await this.productsRepository.update(currentId, product)
 
       if (result.affected > 0) {
         return res.status(Success).send(result)
@@ -181,9 +186,9 @@ export class ProductsController {
     try {
       const { id } = req?.params ?? {}
 
-      const result = await this.productsRepository.deleteOne(id)
+      const result = await this.productsRepository.delete(genId(id))
 
-      if (result.deletedCount > 0) {
+      if (result.affected > 0) {
         return res.status(Success).send(result)
       }
 
@@ -199,7 +204,7 @@ export class ProductsController {
     try {
       const { id } = req?.params ?? {}
 
-      const product = await this.productsRepository.getById(id)
+      const product = await this.productsRepository.getById(genId(id))
 
       return res.status(Success).send(product)
     } catch (error) {
@@ -239,7 +244,6 @@ export class ProductsController {
               }
 
               const newImage = new Image()
-              newImage.id = genId()
               newImage.fileName = file.originalFilename
               newImage.createdDate = new Date()
 
@@ -261,6 +265,7 @@ export class ProductsController {
   public getTempImages = async (req: Request, res: Response) => {
     try {
       let images = await this.imagesRepository.getAll()
+
       return res.status(Success).send(images)
     } catch (error) {
       logger.error(`productsRoute get all images error ==> ${error}`)
@@ -298,15 +303,16 @@ export class ProductsController {
         return res.status(SomethingWrong).send({ message: 'Parâmetros não informados.' })
       }
 
-      const product: Product = await this.productsRepository.getById(idProduct)
+      const currentId = genId(idProduct)
+      const product: Product = await this.productsRepository.getById(currentId)
       const images: Image[] = product?.images ?? []
 
       if (images.length === 1) {
         return res.status(SomethingWrong).send({ message: 'Produto deve possuir ao menos uma imagem.' })
       }
 
-      const image = images?.find((img) => img?.id?.toString() === idImage)
-      const newImages = images?.filter((img) => img?.id?.toString() !== idImage)
+      const image = images?.find((img) => img?._id?.toString() === idImage)
+      const newImages = images?.filter((img) => img?._id?.toString() !== idImage)
 
       if (image) {
         const ftp = new Client()
@@ -317,7 +323,7 @@ export class ProductsController {
         updatedProduct.images = newImages
         updatedProduct.updatedDate = new Date()
 
-        await this.productsRepository.update(idProduct, updatedProduct)
+        await this.productsRepository.update(currentId, updatedProduct)
 
         return res.status(Success).send({ message: `Imagem id: ${idImage} foi excluída.` })
       }
@@ -331,14 +337,15 @@ export class ProductsController {
   public deleteTempImageById = async (req: Request, res: Response) => {
     try {
       const { id } = req?.params ?? {}
+      const currentId = genId(id)
 
-      const image: Image = await this.imagesRepository.getById(id)
+      const image: Image = await this.imagesRepository.getById(currentId)
       const ftp = new Client()
       await ftp.access(ftpServerInfo)
 
       await ftp.remove(image.fileName)
 
-      await this.imagesRepository.deleteOne(id)
+      await this.imagesRepository.deleteOne(currentId)
 
       return res.status(Success).send({ message: `Imagem id: ${id} temporária foi excluída.` })
     }
@@ -351,12 +358,13 @@ export class ProductsController {
   public getProductsByCategory = async (req: Request, res: Response) => {
     try {
       const { idCategory } = req?.params ?? {}
+      const currentId = genId(idCategory)
 
-      let products = await this.productsRepository.getByCategoryId(idCategory)
+      let products = await this.productsRepository.getByCategoryId(currentId)
 
       const all: ProductsByCategoryList[] = products?.map((product) => (
         {
-          id: product.id,
+          _id: product._id,
           title: product.title
         }
       ))

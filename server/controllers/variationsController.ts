@@ -5,7 +5,7 @@ import { CreateVariationRequest, GetAllVariationsResponse } from '../models/vari
 import { VariationsRepository } from '../repositories/variationsRepository'
 import Variation from '../schemas/Variation'
 import logger from '../logger/logger'
-import { genId } from '../shared/utils'
+import { genId, removeId } from '../shared/utils'
 
 const { Success, Error, SomethingWrong } = codes
 
@@ -23,6 +23,8 @@ export class VariationsController {
 
     try {
       let variations: GetAllVariationsResponse = await this.variationsRepository.getAll(term, page, pageSize)
+      variations.data = variations.data.map(removeId)
+
       res.status(Success).send(variations)
     } catch (error) {
       logger.error(`variationsRoute get error ==> ${error}`)
@@ -42,7 +44,6 @@ export class VariationsController {
       }
 
       let variation = new Variation()
-      variation.id = genId()
       variation.name = name
       variation.createdDate = new Date()
 
@@ -58,7 +59,7 @@ export class VariationsController {
   public delete = async (req: Request, res: Response) => {
     try {
       const { id } = req?.params ?? {}
-      const result = await this.variationsRepository.delete(id)
+      const result = await this.variationsRepository.delete(genId(id))
       return res.status(Success).send({ message: `Variação id:${id} foi excluído.`, ...result })
     }
     catch (error) {

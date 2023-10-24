@@ -9,12 +9,14 @@ export type StatusProductType = {
   isPreOrder?: boolean,
 }
 
+export type ShippingType = "free" | "correios"
+
 export type CreateProductRequest = Omit<Product, "createdDate" | "updatedDate">
 
 export type UpdateProductRequest = Omit<Product, "createdDate">
 
-export type ProductsList = Pick<Product, "id" | "title" | "subtitle" | "images" | "status" | "value" | "valueUnique">
+export type ProductsList = Pick<Product, "_id" | "title" | "subtitle" | "images" | "status" | "value" | "valueUnique">
 
-export type ProductsByCategoryList = Pick<Product, "id" | "title">
+export type ProductsByCategoryList = Pick<Product, "_id" | "title">
 
 export type UpdateStatusRequest = Pick<Product, "status">

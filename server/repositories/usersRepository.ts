@@ -58,18 +58,16 @@ export class UsersRepository extends BaseMongo {
     return result
   }
 
-  public async update(id: string, objToUpdate: User) {
+  public async update(id: ObjectId, objToUpdate: User) {
     const repo = await this.usersRepository
-    const result = await repo.update({
-      id: { $eq: id }
-    }, objToUpdate)
+    const result = await repo.update(id, objToUpdate)
 
     return result
   }
 
-  public async delete(id: string) {
+  public async delete(id: ObjectId) {
     const repo = await this.usersRepository
-    const result = await repo.deleteOne({ id })
+    const result = await repo.delete(id)
 
     return result
   }
