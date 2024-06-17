@@ -1,38 +1,30 @@
 import { Request, Response } from 'express'
 const fs = require('fs')
-const formidable = require('formidable')
-const sharp = require('sharp')
 import { Client } from 'basic-ftp'
+import { container } from 'tsyringe'
 
-import { ftpServerInfo } from '../config/FtpConnection'
-import { CreateProductRequest, ProductsByCategoryList, ProductsList, UpdateProductRequest, UpdateStatusRequest } from '../models/products'
-import { ImagesRepository } from '../repositories/imagesRepository'
-import { ProductsRepository } from '../repositories/productsRepository'
 import Image from '../schemas/Image'
 import Product from '../schemas/Product'
+import { ftpServerInfo } from '../config/FtpConnection'
+import { CreateProductRequest, ProductsByCategoryList, ProductsList, UpdateProductRequest, UpdateStatusRequest } from '../models/products'
 
-import codes from '../constants/codes'
 import logger from '../logger/logger'
+import codes from '../constants/codes'
 import { genId } from '../shared/utils'
+import { ImagesService } from '../services/imagesService'
+import { ProductsService } from '../services/productsService'
 
 const { Success, Error, SomethingWrong } = codes
 
 export class ProductsController {
-  private imagesRepository: ImagesRepository
-  private productsRepository: ProductsRepository
-
-  constructor() {
-    this.imagesRepository = new ImagesRepository()
-    this.productsRepository = new ProductsRepository()
-  }
-
   public getAll = async (req: Request, res: Response) => {
     const term = req.query?.term?.toString() ?? ''
     const page = Number.parseInt(req.query?.page?.toString() ?? '1')
     const pageSize = Number.parseInt(req.query?.pageSize?.toString() ?? '10')
 
     try {
-      let products = await this.productsRepository.getAll(term, page, pageSize)
+      const productsService = container.resolve(ProductsService)
+      let products = await productsService.getAll(term, page, pageSize)
       const all: ProductsList[] = products?.data?.map((product) => (
         {
           _id: product._id,
@@ -92,8 +84,10 @@ export class ProductsController {
       product.shipping = shipping
       product.createdDate = new Date()
 
-      await this.productsRepository.insert(product)
-      await this.imagesRepository.delete()
+      const productsService = container.resolve(ProductsService)
+      const imagesService = container.resolve(ImagesService)
+      await productsService.insert(product)
+      await imagesService.delete()
 
       return res.status(Success).send(product)
     }
@@ -125,7 +119,10 @@ export class ProductsController {
         shipping
       }: CreateProductRequest = req.body
 
-      let product = await this.productsRepository.getById(currentId)
+      const productsService = container.resolve(ProductsService)
+      const imagesService = container.resolve(ImagesService)
+
+      let product = await productsService.getById(currentId)
       product.title = title
       product.subtitle = subtitle
       product.categories = categories
@@ -143,10 +140,10 @@ export class ProductsController {
       product.updatedDate = new Date()
 
       logger.info(`productsRoute update ==> updating...`)
-      await this.productsRepository.update(currentId, product)
+      await productsService.update(currentId, product)
 
       logger.info(`productsRoute update error ==> clearing temp images...`)
-      await this.imagesRepository.delete()
+      await imagesService.delete()
 
       return res.status(Success).send(product)
     }
@@ -162,13 +159,14 @@ export class ProductsController {
       const currentId = genId(id)
       const { status }: UpdateStatusRequest = req.body
 
-      const product: UpdateProductRequest = await this.productsRepository.getById(currentId)
+      const productsService = container.resolve(ProductsService)
+      const product: UpdateProductRequest = await productsService.getById(currentId)
       product.status = {
         ...product.status,
         ...status
       }
 
-      const result = await this.productsRepository.update(currentId, product)
+      const result = await productsService.update(currentId, product)
 
       if (result.affected > 0) {
         return res.status(Success).send(result)
@@ -186,7 +184,8 @@ export class ProductsController {
     try {
       const { id } = req?.params ?? {}
 
-      const result = await this.productsRepository.delete(genId(id))
+      const productsService = container.resolve(ProductsService)
+      const result = await productsService.delete(genId(id))
 
       if (result.affected > 0) {
         return res.status(Success).send(result)
@@ -204,7 +203,8 @@ export class ProductsController {
     try {
       const { id } = req?.params ?? {}
 
-      const product = await this.productsRepository.getById(genId(id))
+      const productsService = container.resolve(ProductsService)
+      const product = await productsService.getById(genId(id))
 
       return res.status(Success).send(product)
     } catch (error) {
@@ -215,47 +215,14 @@ export class ProductsController {
 
   public saveTempImages = async (req: Request, res: Response) => {
     try {
-      const form = new formidable.IncomingForm()
+      const imagesService = container.resolve(ImagesService)
+      const result = await imagesService.saveTempImages(req)
 
-      form.parse(req, async (err, fields, files) => {
-        if (err) {
-          return res.status(Error).send({ message: 'Erro ao processar o upload do arquivo.' })
-        }
+      if (result?.code === Success) {
+        return res.status(Success).send(result?.image)
+      }
 
-        if (files.files.length === 0) {
-          return res.status(SomethingWrong).send({ message: 'Nenhum arquivo enviado.' })
-        }
-
-        const ftp = new Client()
-        let result = new Image()
-
-        for (const file of files.files || []) {
-          await ftp.access(ftpServerInfo)
-            .then(async () => {
-              let newFile = null
-              let path = ''
-
-              if ((file.size / 1000) > 1000) {
-                newFile = await sharp(file.filepath).png({ quality: 20 })
-                path = newFile?.options?.input?.file || ''
-              } else {
-                newFile = await fs.createReadStream(file.filepath)
-                path = file.filepath
-              }
-
-              const newImage = new Image()
-              newImage.fileName = file.originalFilename
-              newImage.createdDate = new Date()
-
-              result = await this.imagesRepository.insert(newImage)
-              await ftp.uploadFrom(newFile, file.originalFilename, { localEndInclusive: 1, localStart: 0 })
-              ftp.close()
-            })
-        }
-
-        return res.status(Success).send(result)
-      })
-
+      return res.status(result?.code).send({ message: result?.message })
     } catch (error) {
       logger.error(`productsRoute upload image error ==> ${error}`)
       return res.status(Error).send({ message: 'Ocorreu um erro ao processar as imagens.' })
@@ -264,7 +231,8 @@ export class ProductsController {
 
   public getTempImages = async (req: Request, res: Response) => {
     try {
-      let images = await this.imagesRepository.getAll()
+      const imagesService = container.resolve(ImagesService)
+      let images = await imagesService.getAll()
 
       return res.status(Success).send(images)
     } catch (error) {
@@ -281,7 +249,6 @@ export class ProductsController {
 
       await ftp.access(ftpServerInfo)
       // const buffer = await ftp.download('temp.png', fileName)
-      const buffer = await ftp.appendFrom('temp.png', fileName)
       const imageBuffer = fs.readFileSync('temp.png');
       const base64Image = imageBuffer.toString('base64');
 
@@ -304,7 +271,8 @@ export class ProductsController {
       }
 
       const currentId = genId(idProduct)
-      const product: Product = await this.productsRepository.getById(currentId)
+      const productsService = container.resolve(ProductsService)
+      const product: Product = await productsService.getById(currentId)
       const images: Image[] = product?.images ?? []
 
       if (images.length === 1) {
@@ -323,7 +291,8 @@ export class ProductsController {
         updatedProduct.images = newImages
         updatedProduct.updatedDate = new Date()
 
-        await this.productsRepository.update(currentId, updatedProduct)
+        const productsService = container.resolve(ProductsService)
+        await productsService.update(currentId, updatedProduct)
 
         return res.status(Success).send({ message: `Imagem id: ${idImage} foi excluída.` })
       }
@@ -339,13 +308,14 @@ export class ProductsController {
       const { id } = req?.params ?? {}
       const currentId = genId(id)
 
-      const image: Image = await this.imagesRepository.getById(currentId)
+      const imagesService = container.resolve(ImagesService)
+      const image: Image = await imagesService.getById(currentId)
       const ftp = new Client()
       await ftp.access(ftpServerInfo)
 
       await ftp.remove(image.fileName)
 
-      await this.imagesRepository.deleteOne(currentId)
+      await imagesService.deleteOne(currentId)
 
       return res.status(Success).send({ message: `Imagem id: ${id} temporária foi excluída.` })
     }
@@ -360,7 +330,8 @@ export class ProductsController {
       const { idCategory } = req?.params ?? {}
       const currentId = genId(idCategory)
 
-      let products = await this.productsRepository.getByCategoryId(currentId)
+      const productsService = container.resolve(ProductsService)
+      let products = await productsService.getByCategoryId(currentId)
 
       const all: ProductsByCategoryList[] = products?.map((product) => (
         {

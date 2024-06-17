@@ -1,28 +1,24 @@
 import { Request, Response } from 'express'
+import { container } from 'tsyringe'
 
-import codes from '../constants/codes'
-import { CreateVariationRequest, GetAllVariationsResponse } from '../models/variations'
-import { VariationsRepository } from '../repositories/variationsRepository'
-import Variation from '../schemas/Variation'
 import logger from '../logger/logger'
+import codes from '../constants/codes'
+import Variation from '../schemas/Variation'
 import { genId, removeId } from '../shared/utils'
+import { VariationsService } from '../services/variationsService'
+import { CreateVariationRequest, GetAllVariationsResponse } from '../models/variations'
 
 const { Success, Error, SomethingWrong } = codes
 
 export class VariationsController {
-  private variationsRepository: VariationsRepository
-
-  constructor() {
-    this.variationsRepository = new VariationsRepository()
-  }
-
   public getAll = async (req: Request, res: Response) => {
     const term = req.query?.term?.toString() ?? ''
     const page = Number.parseInt(req.query?.page?.toString() ?? '1')
     const pageSize = Number.parseInt(req.query?.pageSize?.toString() ?? '10')
 
     try {
-      let variations: GetAllVariationsResponse = await this.variationsRepository.getAll(term, page, pageSize)
+      const variationsService = container.resolve(VariationsService)
+      let variations: GetAllVariationsResponse = await variationsService.getAll(term, page, pageSize)
       variations.data = variations.data.map(removeId)
 
       res.status(Success).send(variations)
@@ -47,7 +43,8 @@ export class VariationsController {
       variation.name = name
       variation.createdDate = new Date()
 
-      await this.variationsRepository.insert(variation)
+      const variationsService = container.resolve(VariationsService)
+      await variationsService.insert(variation)
       return res.status(Success).send(variation)
     }
     catch (error) {
@@ -59,7 +56,9 @@ export class VariationsController {
   public delete = async (req: Request, res: Response) => {
     try {
       const { id } = req?.params ?? {}
-      const result = await this.variationsRepository.delete(genId(id))
+
+      const variationsService = container.resolve(VariationsService)
+      const result = await variationsService.delete(genId(id))
       return res.status(Success).send({ message: `Variação id:${id} foi excluído.`, ...result })
     }
     catch (error) {

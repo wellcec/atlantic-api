@@ -1,9 +1,11 @@
 import { MongoRepository } from 'typeorm'
 import { ObjectId } from 'mongodb'
-import { BaseMongo } from '../config/BaseMongo'
-import Variation from '../schemas/Variation'
 
-export class VariationsRepository extends BaseMongo {
+import Variation from '../schemas/Variation'
+import { BaseMongo } from '../config/BaseMongo'
+import IVariationsRepository from '../interfaces/IVariationsRepository'
+
+export class VariationsRepository extends BaseMongo implements IVariationsRepository {
   private variationsRepository: Promise<MongoRepository<any>>
 
   constructor() {

@@ -1,6 +1,7 @@
 import Product from "../schemas/Product"
+import Image from "../schemas/Image"
 
-export type StatusProductType = {
+type StatusProductType = {
   isActive?: boolean,
   isHighlighted?: boolean,
   isLaunch?: boolean,
@@ -9,14 +10,39 @@ export type StatusProductType = {
   isPreOrder?: boolean,
 }
 
-export type ShippingType = "free" | "correios"
+type ReturnFeedbackType = {
+  message?: string
+  code?: number
+  image?: Image
+}
 
-export type CreateProductRequest = Omit<Product, "createdDate" | "updatedDate">
+type ShippingType = "free" | "correios"
 
-export type UpdateProductRequest = Omit<Product, "createdDate">
+type CreateProductRequest = Omit<Product, "createdDate" | "updatedDate">
 
-export type ProductsList = Pick<Product, "_id" | "title" | "subtitle" | "images" | "status" | "value" | "valueUnique">
+type UpdateProductRequest = Omit<Product, "createdDate">
 
-export type ProductsByCategoryList = Pick<Product, "_id" | "title">
+type ProductsList = Pick<Product, "_id" | "title" | "subtitle" | "images" | "status" | "value" | "valueUnique">
 
-export type UpdateStatusRequest = Pick<Product, "status">
+type ProductsByCategoryList = Pick<Product, "_id" | "title">
+
+type UpdateStatusRequest = Pick<Product, "status">
+
+type GetAllProductsResponse = {
+  data: ProductsList[]
+  page: number
+  pageSize: number
+  count: number
+}
+
+export {
+  StatusProductType,
+  ReturnFeedbackType,
+  ShippingType,
+  CreateProductRequest,
+  UpdateProductRequest,
+  ProductsList,
+  ProductsByCategoryList,
+  UpdateStatusRequest,
+  GetAllProductsResponse,
+}

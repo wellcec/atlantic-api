@@ -1,9 +1,11 @@
 import { MongoRepository } from 'typeorm'
-import { BaseMongo } from '../config/BaseMongo'
-import Image from '../schemas/Image'
 import { ObjectId } from 'mongodb'
 
-export class ImagesRepository extends BaseMongo {
+import Image from '../schemas/Image'
+import { BaseMongo } from '../config/BaseMongo'
+import IImagesRepository from '../interfaces/IImagesRepository'
+
+export class ImagesRepository extends BaseMongo implements IImagesRepository {
   private imagesRepository: Promise<MongoRepository<any>>
 
   constructor() {

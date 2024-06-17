@@ -1,26 +1,24 @@
 import { Request, Response } from 'express'
-import { CreateUserRequest, GetAllUsersRespnse } from '../models/users'
-import { UsersRepository } from '../repositories/usersRepository'
+import { container } from 'tsyringe'
+
 import User from '../schemas/User'
-import codes from '../constants/codes'
 import logger from '../logger/logger'
+import codes from '../constants/codes'
 import { genId, removeId } from '../shared/utils'
+import { CreateUserRequest } from '../models/users'
+import { UsersService } from '../services/usersService'
+
 const { Success, Error } = codes
 
 export class UsersController {
-  private usersRepository: UsersRepository
-
-  constructor() {
-    this.usersRepository = new UsersRepository()
-  }
-
   public getAll = async (req: Request, res: Response) => {
     const term = req.query?.term?.toString() ?? ''
     const page = Number.parseInt(req.query?.page?.toString() ?? '1')
     const pageSize = Number.parseInt(req.query?.pageSize?.toString() ?? '20')
 
     try {
-      let users = await this.usersRepository.getAll(term, page, pageSize)
+      const usersService = container.resolve(UsersService)
+      let users = await usersService.getAll(term, page, pageSize)
       users.data = users.data.map(removeId)
 
       return res.status(Success).send(users)
@@ -39,7 +37,8 @@ export class UsersController {
       user.document = document
       user.createdDate = new Date()
 
-      await this.usersRepository.insert(user)
+      const usersService = container.resolve(UsersService)
+      await usersService.insert(user)
       return res.status(Success).send(user)
     }
     catch (error) {
@@ -58,7 +57,8 @@ export class UsersController {
       user.name = name
       user.document = document
 
-      await this.usersRepository.update(genId(id), user)
+      const usersService = container.resolve(UsersService)
+      await usersService.update(genId(id), user)
       return res.status(Success).send({ message: 'Usuário atualizado com sucesso.' })
     } catch (error) {
       logger.error(`usersRouter put error ==> ${error}`)
@@ -69,7 +69,8 @@ export class UsersController {
   public delete = async (req: Request, res: Response) => {
     try {
       const { id } = req?.params ?? {}
-      const result = await this.usersRepository.delete(genId(id))
+      const usersService = container.resolve(UsersService)
+      const result = await usersService.delete(genId(id))
       return res.status(Success).send({ message: `Usuário id:${id} foi excluído.`, ...result })
     }
     catch (error) {

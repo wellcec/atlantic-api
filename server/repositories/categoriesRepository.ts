@@ -1,9 +1,11 @@
-import { MongoRepository } from 'typeorm'
-import { BaseMongo } from '../config/BaseMongo'
-import Category from '../schemas/Category'
+import { DeleteResult, MongoRepository, UpdateResult } from 'typeorm'
 import { ObjectId } from 'mongodb'
 
-export class CategoriesRepository extends BaseMongo {
+import Category from '../schemas/Category'
+import { BaseMongo } from '../config/BaseMongo'
+import ICategoriesRepository from '../interfaces/ICategoriesRepository'
+
+export class CategoriesRepository extends BaseMongo implements ICategoriesRepository {
   private categoriesRepository: Promise<MongoRepository<any>>
 
   constructor() {
@@ -54,7 +56,7 @@ export class CategoriesRepository extends BaseMongo {
   public async insert(category: Category) {
     const repo = await this.categoriesRepository
     const categoryToInsert: Category = repo.create(category)
-    const result = await repo.save(categoryToInsert)
+    const result: Category = await repo.save(categoryToInsert)
 
     return result
   }
@@ -66,14 +68,14 @@ export class CategoriesRepository extends BaseMongo {
     });
   }
 
-  public async update(id: ObjectId, objToUpdate: Category) {
+  public async update(id: ObjectId, objToUpdate: Category): Promise<UpdateResult> {
     const repo = await this.categoriesRepository
     const result = await repo.update(id, objToUpdate)
 
     return result
   }
 
-  public async delete(id: ObjectId) {
+  public async delete(id: ObjectId): Promise<DeleteResult> {
     const repo = await this.categoriesRepository
     const result = await repo.delete(id)
 

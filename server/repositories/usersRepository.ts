@@ -1,9 +1,11 @@
 import { MongoRepository } from 'typeorm'
 import { ObjectId } from 'mongodb'
-import { BaseMongo } from '../config/BaseMongo'
-import User from '../schemas/User'
 
-export class UsersRepository extends BaseMongo {
+import User from '../schemas/User'
+import { BaseMongo } from '../config/BaseMongo'
+import IUsersRepository from '../interfaces/IUsersRepository'
+
+export class UsersRepository extends BaseMongo implements IUsersRepository {
   private usersRepository: Promise<MongoRepository<any>>
 
   constructor() {

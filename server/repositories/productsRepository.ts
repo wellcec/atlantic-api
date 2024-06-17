@@ -1,10 +1,12 @@
 import { MongoRepository } from 'typeorm'
-import { BaseMongo } from '../config/BaseMongo'
-import Product from '../schemas/Product'
 import { ObjectId } from 'mongodb'
+
+import Product from '../schemas/Product'
+import { BaseMongo } from '../config/BaseMongo'
+import IProductsRepository from '../interfaces/IProductsRepository'
 import { ProductsList, UpdateProductRequest } from '../models/products'
 
-export class ProductsRepository extends BaseMongo {
+export class ProductsRepository extends BaseMongo implements IProductsRepository {
   private productsRepository: Promise<MongoRepository<any>>
 
   constructor() {

@@ -1,6 +1,6 @@
 import User from '../schemas/User'
 
-type GetAllUsersRespnse = {
+type GetAllUsersResponse = {
   data: User[]
   page: number
   pageSize: number
@@ -13,6 +13,6 @@ type CreateUserRequest = {
 }
 
 export {
-  GetAllUsersRespnse,
+  GetAllUsersResponse,
   CreateUserRequest
 }

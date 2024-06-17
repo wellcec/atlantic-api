@@ -7,6 +7,7 @@ import logger from './logger/logger'
 import { router } from './routes'
 import codes from './constants/codes'
 import MongoConnection from './config/MongoConnection'
+import registerSingletons from './config/Containers'
 
 const app = express()
 
@@ -22,6 +23,8 @@ app.use(express.json())
 app.use('/', router)
 
 async function start() {
+  registerSingletons()
+
   await new MongoConnection().startMongoConnection()
 
   app.listen(process.env.PORT, () => {
